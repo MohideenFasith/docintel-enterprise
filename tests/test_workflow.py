@@ -30,3 +30,5 @@ def test_disabled_rule_and_default():
     router = WorkflowRouter()
     router.upsert(WorkflowRule(name="disabled", enabled=False, target_queue="blocked"))
     assert router.route(document()).queue == "general"
+
+# _ci-ref-66260
