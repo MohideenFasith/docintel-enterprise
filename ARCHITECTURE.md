@@ -40,3 +40,5 @@ Structured JSON logs carry document IDs and outcomes. Prometheus metrics capture
 - durable background queue replacing `JobQueue`
 - OpenTelemetry tracing/export
 - tenant-aware authorization and quotas
+
+# _ci-ref-30837
