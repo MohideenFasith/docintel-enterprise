@@ -242,3 +242,5 @@ class AnnotationIn(BaseModel):
 class AnnotationPatch(BaseModel):
     body: str | None = Field(default=None, min_length=1, max_length=10_000)
     labels: list[str] | None = Field(default=None, max_length=50)
+
+# _ci-ref-25806
