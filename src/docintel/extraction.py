@@ -42,3 +42,5 @@ def extract_domains(urls: list[str]) -> list[str]:
         if host:
             domains.append(host.lower())
     return _unique(domains)
+
+# _ci-ref-23425
