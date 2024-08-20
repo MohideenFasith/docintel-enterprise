@@ -35,3 +35,5 @@ def capture_exception(error: BaseException, *, request_id: str | None = None) ->
         if request_id:
             scope.set_tag("request_id", request_id)
         sentry_sdk.capture_exception(error)
+
+# _ci-ref-27451
