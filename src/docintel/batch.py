@@ -34,3 +34,5 @@ class BatchIngestor:
                 if stop_on_error:
                     break
         return result
+
+# _ci-ref-90750
