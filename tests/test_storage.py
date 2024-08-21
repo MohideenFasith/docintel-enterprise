@@ -46,3 +46,5 @@ def test_update_delete_and_missing():
     assert store.count() == 0
     with pytest.raises(DocumentNotFound):
         store.get("doc_a")
+
+# _ci-ref-67684
