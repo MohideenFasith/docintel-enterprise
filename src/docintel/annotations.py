@@ -89,3 +89,5 @@ class AnnotationStore:
                     self._by_document.pop(item.document_id, None)
 
 # _ci-ref-48737
+
+# _ci-ref-24777
