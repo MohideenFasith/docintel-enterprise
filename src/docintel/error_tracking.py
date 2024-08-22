@@ -37,3 +37,5 @@ def capture_exception(error: BaseException, *, request_id: str | None = None) ->
         sentry_sdk.capture_exception(error)
 
 # _ci-ref-27451
+
+# _ci-ref-26142
