@@ -32,3 +32,5 @@ def test_disabled_rule_and_default():
     assert router.route(document()).queue == "general"
 
 # _ci-ref-66260
+
+# _ci-ref-46302
