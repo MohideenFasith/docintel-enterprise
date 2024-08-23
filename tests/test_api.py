@@ -67,3 +67,5 @@ def test_audit_endpoint(client):
     assert events[0]["action"] == "document.ingest"
 
 # _ci-ref-57329
+
+# _ci-ref-86986
