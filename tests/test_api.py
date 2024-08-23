@@ -65,3 +65,5 @@ def test_audit_endpoint(client):
     events = client.get("/v1/admin/audit").json()
     assert events
     assert events[0]["action"] == "document.ingest"
+
+# _ci-ref-57329
