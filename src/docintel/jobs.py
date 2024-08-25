@@ -57,3 +57,5 @@ class JobQueue:
     def pending_count(self) -> int:
         with self._lock:
             return len(self._pending)
+
+# _ci-ref-62727
