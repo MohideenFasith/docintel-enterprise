@@ -14,3 +14,5 @@
 | Operations | `logging_config.py`, `metrics.py` | JSON logs and Prometheus metrics |
 
 The default process remains self-contained and requires no external database, queue, or search service. Components are separated so production implementations can replace persistence, queueing, and retrieval independently.
+
+# _ci-ref-52827
