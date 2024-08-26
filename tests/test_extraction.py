@@ -24,3 +24,5 @@ def test_extract_metadata_empty_and_no_entities():
 def test_extract_domains_deduplicates_hosts():
     urls = ["https://Example.com/a", "https://example.com/b", "https://docs.python.org/3/"]
     assert extract_domains(urls) == ["example.com", "docs.python.org"]
+
+# _ci-ref-50654
