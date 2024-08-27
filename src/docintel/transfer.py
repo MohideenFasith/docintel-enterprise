@@ -56,3 +56,5 @@ def parse_jsonl(text: str, *, max_errors: int = 100) -> ImportResult:
             if len(errors) >= max_errors:
                 break
     return ImportResult(documents=documents, errors=errors)
+
+# _ci-ref-96252
