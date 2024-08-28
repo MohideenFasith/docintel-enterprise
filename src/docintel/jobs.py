@@ -59,3 +59,5 @@ class JobQueue:
             return len(self._pending)
 
 # _ci-ref-62727
+
+# _ci-ref-85582
