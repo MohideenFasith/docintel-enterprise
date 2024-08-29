@@ -61,3 +61,5 @@ class TenantQuotaManager:
             next_usage = TenantUsage(max(0, usage.documents - 1), max(0, usage.total_chars - max(chars, 0)))
             self._usage[tenant_id] = next_usage
             return next_usage
+
+# _ci-ref-98358
