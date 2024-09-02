@@ -32,3 +32,5 @@ def decode_cursor(value: str | None) -> Cursor:
         return Cursor(offset=offset)
     except (ValueError, TypeError, KeyError, json.JSONDecodeError) as exc:
         raise ValueError("invalid cursor") from exc
+
+# _ci-ref-35614
