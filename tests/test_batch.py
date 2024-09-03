@@ -26,3 +26,5 @@ def test_batch_stop_on_error():
     assert len(result.failed) == 1
 
 # _ci-ref-13515
+
+# _ci-ref-23624
