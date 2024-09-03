@@ -434,3 +434,5 @@ class DocumentService:
             "ingestion_policies": len(self.policies.list()),
             "collections": len(self.collections.list()),
         }
+
+# _ci-ref-28661
