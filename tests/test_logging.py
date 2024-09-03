@@ -40,3 +40,5 @@ def test_json_log_contains_correlation_fields() -> None:
     assert payload["actor"] == "writer"
     assert payload["document_id"] == "doc-7"
     assert payload["service"] == "docintel-enterprise"
+
+# _ci-ref-27499
