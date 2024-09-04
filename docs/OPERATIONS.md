@@ -19,3 +19,5 @@ The default store is deliberately in-memory. Production adapters should persist 
 ## Dependency updates
 
 Keep runtime pins in `requirements.lock` aligned with `pyproject.toml`. Run tests, type checking, lint, and `pip-audit` in the same change as dependency updates.
+
+# _ci-ref-52762
