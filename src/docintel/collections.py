@@ -79,3 +79,5 @@ class CollectionStore:
         with self._lock:
             if self._collections.pop(collection_id, None) is None:
                 raise KeyError(collection_id)
+
+# _ci-ref-44735
