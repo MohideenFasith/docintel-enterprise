@@ -48,3 +48,5 @@ def test_capture_exception_sets_request_id(monkeypatch) -> None:
     error_tracking.capture_exception(error, request_id="req-99")
     assert tags == {"request_id": "req-99"}
     assert captured == [error]
+
+# _ci-ref-42748
