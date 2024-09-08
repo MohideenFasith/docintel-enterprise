@@ -115,3 +115,5 @@ See [SECURITY.md](SECURITY.md) for threat boundaries, credential handling, repor
 - [Observability guide](docs/OBSERVABILITY.md)
 - [Feature map](docs/FEATURES.md)
 - [Changelog](CHANGELOG.md)
+
+# _ci-ref-18450
