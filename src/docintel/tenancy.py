@@ -63,3 +63,5 @@ class TenantQuotaManager:
             return next_usage
 
 # _ci-ref-98358
+
+# _ci-ref-66774
