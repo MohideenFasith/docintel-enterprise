@@ -46,3 +46,5 @@ def test_saved_search_api_lifecycle(client):
     assert missing_run.status_code == 404
     assert client.delete(f"/v1/saved-searches/{search_id}").status_code == 204
     assert client.delete(f"/v1/saved-searches/{search_id}").status_code == 404
+
+# _ci-ref-57069
