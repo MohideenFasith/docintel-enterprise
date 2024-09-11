@@ -24,3 +24,5 @@ Prefer small commits describing one observable behavior, for example `reject dup
 ## API compatibility
 
 Public routes are versioned under `/v1`. Additive response fields are allowed; removing or changing existing fields requires a versioned migration note.
+
+# _ci-ref-17992
