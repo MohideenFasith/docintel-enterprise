@@ -81,3 +81,5 @@ def test_missing_policy_raises():
         IngestionPolicyEngine().get("missing")
 
 # _ci-ref-81612
+
+# _ci-ref-87537
