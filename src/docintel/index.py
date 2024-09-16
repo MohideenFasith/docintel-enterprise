@@ -145,3 +145,5 @@ class LexicalIndex:
                 "terms": len(self._postings),
                 "documents": len(self._document_chunks),
             }
+
+# _ci-ref-67261
