@@ -20,3 +20,5 @@ def test_job_queue_failure_is_recorded():
     assert result.id == job.id
     assert result.status == JobStatus.FAILED
     assert "no handler" in result.error
+
+# _ci-ref-61327
