@@ -34,3 +34,5 @@ def test_document_lifecycle_is_exercised_through_http(client) -> None:
     deleted = client.delete(f"/v1/documents/{document_id}")
     assert deleted.status_code == 204
     assert client.get(f"/v1/documents/{document_id}").status_code == 404
+
+# _ci-ref-30591
