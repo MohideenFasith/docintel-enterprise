@@ -244,3 +244,5 @@ class AnnotationPatch(BaseModel):
     labels: list[str] | None = Field(default=None, max_length=50)
 
 # _ci-ref-25806
+
+# _ci-ref-44226
