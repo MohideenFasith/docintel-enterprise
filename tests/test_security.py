@@ -29,3 +29,5 @@ def test_rate_limiter_window():
     with pytest.raises(RateLimitExceeded):
         limiter.check("user", now=2)
     assert limiter.check("user", now=11) == 1
+
+# _ci-ref-22712
