@@ -31,3 +31,5 @@ class Metrics:
 
     def render(self) -> bytes:
         return generate_latest(self.registry)
+
+# _ci-ref-83956
