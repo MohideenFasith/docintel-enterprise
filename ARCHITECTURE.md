@@ -42,3 +42,5 @@ Structured JSON logs carry document IDs and outcomes. Prometheus metrics capture
 - tenant-aware authorization and quotas
 
 # _ci-ref-30837
+
+# _ci-ref-21945
