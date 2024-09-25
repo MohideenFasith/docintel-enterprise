@@ -63,3 +63,5 @@ def test_search_analytics_api(client):
     assert [item["query"] for item in zero.json()["top_queries"]] == ["missing"]
     assert client.delete("/v1/admin/search-analytics").status_code == 204
     assert client.get("/v1/admin/search-analytics").json()["total_searches"] == 0
+
+# _ci-ref-29326
