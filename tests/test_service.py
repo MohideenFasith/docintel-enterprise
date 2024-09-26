@@ -50,3 +50,5 @@ def test_audit_records_mutations():
     svc.patch(record.id, DocumentPatch(title="B"), actor="alice")
     actions = [event.action for event in svc.audit.list(actor="alice")]
     assert actions == ["document.patch", "document.ingest"]
+
+# _ci-ref-32570
