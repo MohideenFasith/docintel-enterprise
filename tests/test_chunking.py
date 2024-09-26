@@ -36,3 +36,5 @@ def test_token_estimate_and_sentence_split():
     assert split_sentences("First. Second! Third?") == ["First.", "Second!", "Third?"]
 
 # _ci-ref-13847
+
+# _ci-ref-23845
