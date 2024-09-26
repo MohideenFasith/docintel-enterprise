@@ -36,3 +36,5 @@ def test_document_lifecycle_is_exercised_through_http(client) -> None:
     assert client.get(f"/v1/documents/{document_id}").status_code == 404
 
 # _ci-ref-30591
+
+# _ci-ref-24748
