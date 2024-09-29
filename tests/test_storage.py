@@ -52,3 +52,5 @@ def test_update_delete_and_missing():
 # _ci-ref-75065
 
 # _ci-ref-58741
+
+# _ci-ref-18600
