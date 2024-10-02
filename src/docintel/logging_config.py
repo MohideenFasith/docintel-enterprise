@@ -48,3 +48,5 @@ def configure_logging(level: str = "INFO") -> None:
             "root": {"handlers": ["console"], "level": level.upper()},
         }
     )
+
+# _ci-ref-50037
