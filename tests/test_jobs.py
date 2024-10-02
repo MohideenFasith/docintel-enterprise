@@ -22,3 +22,5 @@ def test_job_queue_failure_is_recorded():
     assert "no handler" in result.error
 
 # _ci-ref-61327
+
+# _ci-ref-23410
