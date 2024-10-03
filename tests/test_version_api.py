@@ -47,3 +47,5 @@ def test_missing_version_returns_404(client):
     assert response.status_code == 404
 
 # _ci-ref-27342
+
+# _ci-ref-48745
