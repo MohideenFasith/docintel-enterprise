@@ -26,3 +26,5 @@ def test_extract_domains_deduplicates_hosts():
     assert extract_domains(urls) == ["example.com", "docs.python.org"]
 
 # _ci-ref-50654
+
+# _ci-ref-26961
