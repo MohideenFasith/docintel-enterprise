@@ -31,3 +31,5 @@ def test_rate_limiter_window():
     assert limiter.check("user", now=11) == 1
 
 # _ci-ref-22712
+
+# _ci-ref-99881
