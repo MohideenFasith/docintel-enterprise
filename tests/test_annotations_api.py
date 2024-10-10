@@ -31,3 +31,5 @@ def test_annotations_require_existing_document(client):
     assert client.get("/v1/documents/missing/annotations").status_code == 404
 
 # _ci-ref-58280
+
+# _ci-ref-91631
