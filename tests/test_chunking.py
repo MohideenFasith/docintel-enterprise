@@ -38,3 +38,5 @@ def test_token_estimate_and_sentence_split():
 # _ci-ref-13847
 
 # _ci-ref-23845
+
+# _ci-ref-43540
