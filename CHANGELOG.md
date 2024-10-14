@@ -25,3 +25,5 @@
 - Add API-key authentication, writer/admin roles, sliding-window rate limiting, PII redaction, and hardened container defaults.
 - Add audit events, structured JSON logging, Prometheus metrics, workflow rules, collections, annotations, version snapshots, retention policies, tenant quotas, batch ingest, JSONL transfer, webhook signing/retry state, and a local job queue.
 - Add pinned runtime dependencies, lint/type/coverage/security-audit CI gates, Make targets, expanded onboarding/architecture/security/operations documentation, and broad unit/API coverage.
+
+# _ci-ref-24920
