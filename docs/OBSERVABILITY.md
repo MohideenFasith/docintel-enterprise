@@ -7,3 +7,5 @@ DocIntel configures application-wide JSON logging with `python-json-logger`. Req
 Production exception tracking uses the Sentry SDK. Set `DOCINTEL_SENTRY_DSN` to enable it; leaving the value blank is an explicit no-op. Unhandled FastAPI exceptions are logged with stack traces and are passed to Sentry together with the request id. Default PII transmission is disabled.
 
 # _ci-ref-38091
+
+# _ci-ref-74990
