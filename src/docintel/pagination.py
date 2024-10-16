@@ -34,3 +34,5 @@ def decode_cursor(value: str | None) -> Cursor:
         raise ValueError("invalid cursor") from exc
 
 # _ci-ref-35614
+
+# _ci-ref-68598
