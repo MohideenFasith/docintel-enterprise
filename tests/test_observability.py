@@ -46,3 +46,5 @@ def test_json_formatter_populates_timestamp_and_standard_fields():
     assert payload["level"] == "INFO"
     assert payload["logger"] == "docintel.test"
     assert payload["event"] == "hello"
+
+# _ci-ref-54676
