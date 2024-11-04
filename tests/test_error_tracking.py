@@ -50,3 +50,5 @@ def test_capture_exception_sets_request_id(monkeypatch) -> None:
     assert captured == [error]
 
 # _ci-ref-42748
+
+# _ci-ref-71879
