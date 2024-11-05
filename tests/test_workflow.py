@@ -46,3 +46,5 @@ def test_disabled_rule_and_default():
 # _ci-ref-55134
 
 # _ci-ref-76967
+
+# _ci-ref-18239
