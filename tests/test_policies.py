@@ -85,3 +85,5 @@ def test_missing_policy_raises():
 # _ci-ref-87537
 
 # _ci-ref-87120
+
+# _ci-ref-87028
