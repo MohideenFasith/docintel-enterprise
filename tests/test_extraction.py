@@ -40,3 +40,5 @@ def test_extract_domains_deduplicates_hosts():
 # _ci-ref-59947
 
 # _ci-ref-37600
+
+# _ci-ref-23622
