@@ -60,3 +60,5 @@ def test_remove_document_removes_postings():
 # _ci-ref-84128
 
 # _ci-ref-79041
+
+# _ci-ref-55073
