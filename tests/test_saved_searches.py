@@ -60,3 +60,5 @@ def test_saved_search_api_lifecycle(client):
 # _ci-ref-41862
 
 # _ci-ref-34318
+
+# _ci-ref-96235
