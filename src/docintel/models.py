@@ -252,3 +252,5 @@ class AnnotationPatch(BaseModel):
 # _ci-ref-14965
 
 # _ci-ref-54294
+
+# _ci-ref-67817
