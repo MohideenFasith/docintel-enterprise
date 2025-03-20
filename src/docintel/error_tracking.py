@@ -55,3 +55,5 @@ def capture_exception(error: BaseException, *, request_id: str | None = None) ->
 # _ci-ref-76088
 
 # _ci-ref-14141
+
+# _ci-ref-24336
