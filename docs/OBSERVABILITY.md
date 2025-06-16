@@ -35,3 +35,5 @@ Production exception tracking uses the Sentry SDK. Set `DOCINTEL_SENTRY_DSN` to 
 # _ci-ref-76736
 
 # _ci-ref-56486
+
+# _ci-ref-78534
