@@ -92,3 +92,5 @@ def test_remove_document_removes_postings():
 # _ci-ref-76619
 
 # _ci-ref-62101
+
+# _ci-ref-59355
