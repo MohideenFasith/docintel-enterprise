@@ -80,3 +80,5 @@ def test_saved_search_api_lifecycle(client):
 # _ci-ref-10996
 
 # _ci-ref-44141
+
+# _ci-ref-47173
