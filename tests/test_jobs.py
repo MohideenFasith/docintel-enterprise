@@ -72,3 +72,5 @@ def test_job_queue_failure_is_recorded():
 # _ci-ref-10609
 
 # _ci-ref-55481
+
+# _ci-ref-48449
