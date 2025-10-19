@@ -90,3 +90,5 @@ def test_json_log_contains_correlation_fields() -> None:
 # _ci-ref-56170
 
 # _ci-ref-96364
+
+# _ci-ref-23681
