@@ -85,3 +85,5 @@ def test_annotations_require_existing_document(client):
 # _ci-ref-31305
 
 # _ci-ref-83546
+
+# _ci-ref-90725
