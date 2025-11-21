@@ -85,3 +85,5 @@ def test_rate_limiter_window():
 # _ci-ref-80016
 
 # _ci-ref-33581
+
+# _ci-ref-60129
