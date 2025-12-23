@@ -107,3 +107,5 @@ def test_search_analytics_api(client):
 # _ci-ref-56809
 
 # _ci-ref-69017
+
+# _ci-ref-94815
