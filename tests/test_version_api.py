@@ -83,3 +83,5 @@ def test_missing_version_returns_404(client):
 # _ci-ref-15542
 
 # _ci-ref-55075
+
+# _ci-ref-40432
