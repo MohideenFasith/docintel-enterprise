@@ -106,3 +106,5 @@ def test_json_formatter_populates_timestamp_and_standard_fields():
 # _ci-ref-38159
 
 # _ci-ref-30142
+
+# _ci-ref-70390
