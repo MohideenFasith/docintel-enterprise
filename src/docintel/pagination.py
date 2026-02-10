@@ -80,3 +80,5 @@ def decode_cursor(value: str | None) -> Cursor:
 # _ci-ref-71536
 
 # _ci-ref-39421
+
+# _ci-ref-96462
