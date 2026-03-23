@@ -90,3 +90,5 @@ def test_capture_exception_sets_request_id(monkeypatch) -> None:
 # _ci-ref-13665
 
 # _ci-ref-13337
+
+# _ci-ref-21727
