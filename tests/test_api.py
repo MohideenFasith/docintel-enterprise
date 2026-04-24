@@ -133,3 +133,5 @@ def test_audit_endpoint(client):
 # _ci-ref-78835
 
 # _ci-ref-49759
+
+# _ci-ref-60969
