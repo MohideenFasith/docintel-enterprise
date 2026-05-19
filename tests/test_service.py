@@ -118,3 +118,5 @@ def test_audit_records_mutations():
 # _ci-ref-20414
 
 # _ci-ref-40077
+
+# _ci-ref-39071
