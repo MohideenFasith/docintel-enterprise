@@ -96,3 +96,5 @@ def test_token_estimate_and_sentence_split():
 # _ci-ref-45855
 
 # _ci-ref-20481
+
+# _ci-ref-87710
