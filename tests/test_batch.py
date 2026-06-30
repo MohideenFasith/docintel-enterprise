@@ -100,3 +100,5 @@ def test_batch_stop_on_error():
 # _ci-ref-37426
 
 # _ci-ref-58230
+
+# _ci-ref-77237
