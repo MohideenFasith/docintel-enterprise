@@ -122,3 +122,5 @@ def test_update_delete_and_missing():
 # _ci-ref-46101
 
 # _ci-ref-23413
+
+# _ci-ref-19535
