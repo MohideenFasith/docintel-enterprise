@@ -139,3 +139,5 @@ def select_expired(documents: list[DocumentRecord], policies: list[RetentionPoli
 # _ci-ref-18589
 
 # _ci-ref-51738
+
+# _ci-ref-52975
