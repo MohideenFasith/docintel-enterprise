@@ -130,3 +130,5 @@ def test_json_log_contains_correlation_fields() -> None:
 # _ci-ref-66917
 
 # _ci-ref-85623
+
+# _ci-ref-64462
