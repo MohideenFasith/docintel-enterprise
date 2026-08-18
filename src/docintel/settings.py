@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     admin_api_key: str | None = None
     rate_limit_per_minute: int = Field(default=120, ge=1)
     enable_metrics: bool = True
+    sentry_dsn: str | None = None
 
 
 @lru_cache(maxsize=1)

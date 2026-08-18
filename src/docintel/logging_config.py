@@ -1,34 +1,32 @@
 from __future__ import annotations
 
-import json
 import logging
 from datetime import datetime, timezone
-from typing import Any
+
+from pythonjsonlogger import json
 
 
-_RESERVED = set(logging.LogRecord("", 0, "", 0, "", (), None).__dict__)
+class DocIntelJsonFormatter(json.JsonFormatter):
+    """Structured formatter with stable field names for log processors."""
 
-
-class JsonFormatter(logging.Formatter):
-    def format(self, record: logging.LogRecord) -> str:
-        payload: dict[str, Any] = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "level": record.levelname,
-            "logger": record.name,
-            "message": record.getMessage(),
-        }
-        for key, value in record.__dict__.items():
-            if key not in _RESERVED and key not in {"message", "asctime"}:
-                payload[key] = value
-        if record.exc_info:
-            payload["exception"] = self.formatException(record.exc_info)
-        return json.dumps(payload, default=str, separators=(",", ":"))
+    def add_fields(self, log_record: dict[str, object], record: logging.LogRecord, message_dict: dict[str, object]) -> None:
+        super().add_fields(log_record, record, message_dict)
+        log_record.setdefault("timestamp", datetime.now(timezone.utc).isoformat())
+        log_record["level"] = record.levelname
+        log_record["logger"] = record.name
 
 
 def configure_logging(level: str = "INFO") -> None:
     root = logging.getLogger()
     root.handlers.clear()
     handler = logging.StreamHandler()
-    handler.setFormatter(JsonFormatter())
+    handler.setFormatter(
+        DocIntelJsonFormatter(
+            "%(timestamp)s %(level)s %(logger)s %(message)s %(request_id)s %(actor)s",
+            rename_fields={"message": "event"},
+            static_fields={"service": "docintel-enterprise"},
+            defaults={"request_id": None, "actor": None},
+        )
+    )
     root.addHandler(handler)
     root.setLevel(level.upper())
