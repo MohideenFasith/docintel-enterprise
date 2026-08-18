@@ -23,7 +23,9 @@ jobs:
         with:
           python-version: "3.12"
       - name: Verify dependency locks match pyproject pins
-        run: python scripts/check_lock.py
+        run: |
+          python scripts/check_lock.py
+          python scripts/verify_reproducibility.py
 
   lint:
     runs-on: ubuntu-latest
