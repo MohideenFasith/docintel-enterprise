@@ -350,3 +350,77 @@ def reset_search_analytics(
     except PermissionDenied as exc:
         raise HTTPException(status.HTTP_403_FORBIDDEN, str(exc)) from exc
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post("/collections", status_code=status.HTTP_201_CREATED)
+def create_collection(
+    name: str = Query(min_length=1, max_length=120),
+    description: str = Query(default="", max_length=500),
+    user: Principal = Depends(principal),
+    service: DocumentService = Depends(service_from_request),
+):
+    try:
+        return service.create_collection(name, description, actor=user.name)
+    except ValueError as exc:
+        raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
+
+
+@router.get("/collections")
+def list_collections(
+    _: Principal = Depends(principal),
+    service: DocumentService = Depends(service_from_request),
+):
+    return service.collections.list()
+
+
+@router.get("/collections/{collection_id}")
+def get_collection(
+    collection_id: str,
+    _: Principal = Depends(principal),
+    service: DocumentService = Depends(service_from_request),
+):
+    try:
+        return service.collections.get(collection_id)
+    except KeyError as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "collection not found") from exc
+
+
+@router.put("/collections/{collection_id}/documents/{document_id}")
+def add_collection_document(
+    collection_id: str,
+    document_id: str,
+    user: Principal = Depends(principal),
+    service: DocumentService = Depends(service_from_request),
+):
+    try:
+        return service.add_document_to_collection(collection_id, document_id, actor=user.name)
+    except DocumentNotFound as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "document not found") from exc
+    except KeyError as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "collection not found") from exc
+
+
+@router.delete("/collections/{collection_id}/documents/{document_id}")
+def remove_collection_document(
+    collection_id: str,
+    document_id: str,
+    user: Principal = Depends(principal),
+    service: DocumentService = Depends(service_from_request),
+):
+    try:
+        return service.remove_document_from_collection(collection_id, document_id, actor=user.name)
+    except KeyError as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "collection not found") from exc
+
+
+@router.delete("/collections/{collection_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_collection(
+    collection_id: str,
+    user: Principal = Depends(principal),
+    service: DocumentService = Depends(service_from_request),
+) -> Response:
+    try:
+        service.delete_collection(collection_id, actor=user.name)
+    except KeyError as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "collection not found") from exc
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

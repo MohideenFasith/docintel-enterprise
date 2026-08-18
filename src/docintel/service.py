@@ -7,6 +7,7 @@ from uuid import uuid4
 
 from .audit import AuditLog
 from .chunking import chunk_text
+from .collections import Collection, CollectionStore
 from .errors import DuplicateDocument, InvalidDocument
 from .extraction import extract_metadata
 from .index import LexicalIndex
@@ -48,6 +49,7 @@ class DocumentService:
         saved_searches: SavedSearchStore | None = None,
         policies: IngestionPolicyEngine | None = None,
         search_analytics: SearchAnalytics | None = None,
+        collections: CollectionStore | None = None,
     ) -> None:
         self.settings = settings or get_settings()
         self.store = store or InMemoryDocumentStore()
@@ -58,6 +60,7 @@ class DocumentService:
         self.saved_searches = saved_searches or SavedSearchStore()
         self.policies = policies or IngestionPolicyEngine()
         self.search_analytics = search_analytics or SearchAnalytics()
+        self.collections = collections or CollectionStore()
 
     @staticmethod
     def _content_hash(content: str) -> str:
@@ -218,6 +221,49 @@ class DocumentService:
 
 
 
+
+    def create_collection(self, name: str, description: str = "", *, actor: str) -> Collection:
+        collection = self.collections.create(name, description)
+        self.audit.record(
+            actor=actor,
+            action="collection.create",
+            resource_type="collection",
+            resource_id=collection.id,
+        )
+        return collection
+
+    def add_document_to_collection(self, collection_id: str, document_id: str, *, actor: str) -> Collection:
+        self.store.get(document_id)
+        collection = self.collections.add_document(collection_id, document_id)
+        self.audit.record(
+            actor=actor,
+            action="collection.document_add",
+            resource_type="collection",
+            resource_id=collection_id,
+            detail={"document_id": document_id},
+        )
+        return collection
+
+    def remove_document_from_collection(self, collection_id: str, document_id: str, *, actor: str) -> Collection:
+        collection = self.collections.remove_document(collection_id, document_id)
+        self.audit.record(
+            actor=actor,
+            action="collection.document_remove",
+            resource_type="collection",
+            resource_id=collection_id,
+            detail={"document_id": document_id},
+        )
+        return collection
+
+    def delete_collection(self, collection_id: str, *, actor: str) -> None:
+        self.collections.delete(collection_id)
+        self.audit.record(
+            actor=actor,
+            action="collection.delete",
+            resource_type="collection",
+            resource_id=collection_id,
+        )
+
     def search_analytics_snapshot(self, *, limit: int = 20, zero_results_only: bool = False) -> SearchAnalyticsSnapshot:
         return self.search_analytics.snapshot(limit=limit, zero_results_only=zero_results_only)
 
@@ -295,4 +341,5 @@ class DocumentService:
             "workflows": len(self.workflows.list()),
             "saved_searches": len(self.saved_searches.list()),
             "ingestion_policies": len(self.policies.list()),
+            "collections": len(self.collections.list()),
         }
