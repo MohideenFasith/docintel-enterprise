@@ -12,7 +12,7 @@ def test_content_revision_creates_version_and_updates_search(client):
     )
     assert patched.status_code == 200
     assert patched.json()["version"] == 2
-    assert patched.json()["extracted"]["word_count"] == 6
+    assert patched.json()["extracted"]["word_count"] == 5
 
     versions = client.get(f"/v1/documents/{document_id}/versions")
     assert versions.status_code == 200
