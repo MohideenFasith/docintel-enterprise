@@ -1,35 +1,36 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+
+import sentry_sdk
 
 logger = logging.getLogger(__name__)
 
-try:
-    import sentry_sdk  # type: ignore[import-not-found]
-except ImportError:  # pragma: no cover - optional integration
-    sentry_sdk = None  # type: ignore[assignment]
-
 
 def configure_error_tracking(dsn: str | None, environment: str) -> bool:
-    """Enable Sentry only when a DSN and the optional dependency are present."""
+    """Configure Sentry when a DSN is present; remain a no-op otherwise."""
     if not dsn:
+        logger.info(
+            "error_tracking_disabled",
+            extra={"environment": environment, "provider": "sentry"},
+        )
         return False
-    if sentry_sdk is None:
-        logger.warning("sentry_not_installed", extra={"environment": environment})
-        return False
+
     sentry_sdk.init(
         dsn=dsn,
         environment=environment,
         send_default_pii=False,
         traces_sample_rate=0.0,
     )
+    logger.info(
+        "error_tracking_enabled",
+        extra={"environment": environment, "provider": "sentry"},
+    )
     return True
 
 
 def capture_exception(error: BaseException, *, request_id: str | None = None) -> None:
-    if sentry_sdk is None:
-        return
+    """Capture an unhandled error and attach the request id for correlation."""
     with sentry_sdk.new_scope() as scope:
         if request_id:
             scope.set_tag("request_id", request_id)
