@@ -1,5 +1,9 @@
+import json
+import logging
+
 from fastapi.testclient import TestClient
 
+from docintel.logging_config import DocIntelJsonFormatter
 from docintel.main import create_app
 from docintel.settings import Settings
 
@@ -28,3 +32,17 @@ def test_unhandled_exception_returns_stable_error_shape():
     assert response.status_code == 500
     assert response.json() == {"error": "internal_server_error", "request_id": "boom-1"}
     assert response.headers["x-request-id"] == "boom-1"
+
+
+def test_json_formatter_populates_timestamp_and_standard_fields():
+    formatter = DocIntelJsonFormatter(
+        "%(timestamp)s %(level)s %(logger)s %(message)s",
+        rename_fields={"message": "event"},
+        defaults={"timestamp": None},
+    )
+    record = logging.LogRecord("docintel.test", logging.INFO, __file__, 1, "hello", (), None)
+    payload = json.loads(formatter.format(record))
+    assert payload["timestamp"]
+    assert payload["level"] == "INFO"
+    assert payload["logger"] == "docintel.test"
+    assert payload["event"] == "hello"

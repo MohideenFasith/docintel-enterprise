@@ -11,7 +11,8 @@ class DocIntelJsonFormatter(json.JsonFormatter):
 
     def add_fields(self, log_record: dict[str, object], record: logging.LogRecord, message_dict: dict[str, object]) -> None:
         super().add_fields(log_record, record, message_dict)
-        log_record.setdefault("timestamp", datetime.now(timezone.utc).isoformat())
+        if not log_record.get("timestamp"):
+            log_record["timestamp"] = datetime.now(timezone.utc).isoformat()
         log_record["level"] = record.levelname
         log_record["logger"] = record.name
 
