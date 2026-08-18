@@ -88,6 +88,7 @@ jobs:
           DOCINTEL_APP_ENV: ci-smoke
           DOCINTEL_API_KEY: ""
           DOCINTEL_ADMIN_API_KEY: ""
+          DOCINTEL_SENTRY_DSN: ""
           NO_PROXY: "*"
         run: pytest -q tests/test_api.py tests/test_service.py tests/test_observability.py
 

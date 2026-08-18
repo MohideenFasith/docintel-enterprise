@@ -22,3 +22,15 @@ def settings() -> Settings:
 def client(settings: Settings):
     with TestClient(create_app(settings)) as test_client:
         yield test_client
+
+
+@pytest.fixture(autouse=True)
+def block_external_network(monkeypatch):
+    """Fail any test that attempts a real network connection."""
+    import socket
+
+    def denied(*args, **kwargs):
+        raise AssertionError("outbound network access is forbidden in tests")
+
+    monkeypatch.setattr(socket, "create_connection", denied)
+    monkeypatch.setattr(socket.socket, "connect", denied)
