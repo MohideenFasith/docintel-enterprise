@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.0
+
+- Add owner-scoped saved searches with stored filters and executable queries.
+- Add configurable ingestion policies for blocked phrases, metadata-count limits, and automatic tags.
+- Add bounded search analytics with top-query and zero-result reporting plus admin reset.
+- Expose collections and annotations through audited API workflows.
+- Add content revisions that re-extract, re-chunk, re-index, and preserve version history with unified diffs.
+- Replace ad-hoc JSON formatting with `python-json-logger`, add request correlation IDs, exception logging, and optional Sentry hooks.
+- Add transitive runtime locking, lock-drift validation, Dependabot, split CI jobs, and a clean-container smoke test.
+
 ## 0.2.0
 
 - Expand document lifecycle with update, delete, reindex, listing, and duplicate-content protection.

@@ -4,10 +4,10 @@
 |---|---|---|
 | Ingestion | `service.py`, `batch.py` | validation, duplicate detection, batch outcomes |
 | Processing | `extraction.py`, `chunking.py` | entity extraction, boundary-aware overlapping chunks |
-| Search | `index.py` | BM25-style lexical scoring, filters, snippets |
-| Workflow | `workflow.py` | priority rules over title, tags, and source |
+| Search | `index.py`, `saved_searches.py`, `search_analytics.py` | BM25-style lexical scoring, filters, saved searches, bounded query analytics |
+| Workflow | `workflow.py`, `policies.py` | priority routing plus pre-ingestion policy enforcement |
 | Security | `security.py`, `redaction.py` | API keys, roles, rate limiting, PII redaction |
-| Governance | `audit.py`, `retention.py`, `versioning.py` | audit events, retention selection, version snapshots |
+| Governance | `audit.py`, `retention.py`, `versioning.py` | audit events, retention selection, content revision history and diffs |
 | Organization | `collections.py`, `annotations.py` | document sets and review annotations |
 | Multi-tenancy | `tenancy.py` | document/character quotas |
 | Integration | `webhooks.py`, `transfer.py` | signed webhooks, JSONL import/export |

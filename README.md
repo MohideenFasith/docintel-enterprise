@@ -6,7 +6,7 @@ DocIntel Enterprise is a self-contained document-intelligence backend for ingest
 
 The service accepts documents through a versioned FastAPI API. During ingestion it validates size limits, detects duplicate content with SHA-256, extracts emails/URLs/amounts/dates/phone-like strings, creates overlap-aware chunks, and indexes them in an in-memory BM25-style inverted index. Metadata changes cause a targeted re-index. Deletes remove content from the active store and index.
 
-Workflow rules can route documents using tags, title terms, and source. Mutating operations emit audit events. API-key authentication supports writer/admin roles, a sliding-window rate limiter protects endpoints, and Prometheus-compatible metrics expose ingest/search behavior.
+Workflow rules can route documents using tags, title terms, and source. Saved searches preserve reusable filtered queries; ingestion policies can reject or tag incoming content; collections and annotations support review workflows; content revisions create searchable version history; and bounded search analytics expose recurring and zero-result queries. Mutating operations emit audit events. API-key authentication supports writer/admin roles, a sliding-window rate limiter protects endpoints, and Prometheus-compatible metrics expose ingest/search behavior.
 
 ## Architecture
 
@@ -112,4 +112,6 @@ See [SECURITY.md](SECURITY.md) for threat boundaries, credential handling, repor
 
 - [Feature map](docs/FEATURES.md)
 - [Operations guide](docs/OPERATIONS.md)
+- [Observability guide](docs/OBSERVABILITY.md)
+- [Feature map](docs/FEATURES.md)
 - [Changelog](CHANGELOG.md)
