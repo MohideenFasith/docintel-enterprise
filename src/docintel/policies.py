@@ -1,0 +1,83 @@
+from __future__ import annotations
+
+from threading import RLock
+
+from .models import DocumentIn, ExtractedMetadata, IngestionPolicy, PolicyDecision
+
+
+class PolicyNotFound(KeyError):
+    pass
+
+
+class IngestionPolicyEngine:
+    """Deterministic pre-ingestion policy evaluation.
+
+    Policies are ordered by priority/name. Matching rules may reject a document
+    or add normalized tags. The engine never mutates the caller's payload.
+    """
+
+    def __init__(self) -> None:
+        self._policies: dict[str, IngestionPolicy] = {}
+        self._lock = RLock()
+
+    def upsert(self, policy: IngestionPolicy) -> IngestionPolicy:
+        stored = policy.model_copy(deep=True)
+        with self._lock:
+            self._policies[stored.name] = stored
+        return stored.model_copy(deep=True)
+
+    def get(self, name: str) -> IngestionPolicy:
+        with self._lock:
+            policy = self._policies.get(name)
+            if policy is None:
+                raise PolicyNotFound(name)
+            return policy.model_copy(deep=True)
+
+    def list(self) -> list[IngestionPolicy]:
+        with self._lock:
+            values = list(self._policies.values())
+        values.sort(key=lambda policy: (policy.priority, policy.name.lower()))
+        return [policy.model_copy(deep=True) for policy in values]
+
+    def delete(self, name: str) -> None:
+        self.get(name)
+        with self._lock:
+            del self._policies[name]
+
+    @staticmethod
+    def _matches(policy: IngestionPolicy, payload: DocumentIn) -> bool:
+        if not policy.enabled:
+            return False
+        if policy.source_equals is not None and payload.source != policy.source_equals:
+            return False
+        if policy.require_any_tags and not set(policy.require_any_tags).intersection(payload.tags):
+            return False
+        return True
+
+    def evaluate(self, payload: DocumentIn, extracted: ExtractedMetadata) -> PolicyDecision:
+        content_lower = payload.content.lower()
+        matched: list[str] = []
+        violations: list[str] = []
+        added: set[str] = set()
+
+        for policy in self.list():
+            if not self._matches(policy, payload):
+                continue
+            matched.append(policy.name)
+            for phrase in policy.block_phrases:
+                if phrase in content_lower:
+                    violations.append(f"{policy.name}: blocked phrase {phrase!r}")
+            if policy.max_emails is not None and len(extracted.emails) > policy.max_emails:
+                violations.append(
+                    f"{policy.name}: email count {len(extracted.emails)} exceeds {policy.max_emails}"
+                )
+            if policy.max_urls is not None and len(extracted.urls) > policy.max_urls:
+                violations.append(f"{policy.name}: url count {len(extracted.urls)} exceeds {policy.max_urls}")
+            added.update(policy.add_tags)
+
+        return PolicyDecision(
+            accepted=not violations,
+            matched_policies=matched,
+            violations=violations,
+            add_tags=sorted(added),
+        )

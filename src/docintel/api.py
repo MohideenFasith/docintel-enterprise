@@ -10,8 +10,9 @@ from .errors import (
     RateLimitExceeded,
     WorkflowNotFound,
 )
-from .models import DocumentIn, DocumentPatch, SavedSearchIn, WorkflowRule
+from .models import DocumentIn, DocumentPatch, IngestionPolicy, SavedSearchIn, WorkflowRule
 from .security import ApiKeyAuthenticator, Principal, SlidingWindowRateLimiter
+from .policies import PolicyNotFound
 from .saved_searches import SavedSearchNotFound
 from .service import DocumentService
 
@@ -268,4 +269,57 @@ def delete_saved_search(
         service.delete_saved_search(search_id, actor=user.name)
     except SavedSearchNotFound as exc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "saved search not found") from exc
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get("/ingestion-policies")
+def list_ingestion_policies(
+    user: Principal = Depends(principal),
+    service: DocumentService = Depends(service_from_request),
+):
+    try:
+        ApiKeyAuthenticator.require(user, "admin")
+    except PermissionDenied as exc:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, str(exc)) from exc
+    return service.policies.list()
+
+
+@router.put("/ingestion-policies/{name}")
+def put_ingestion_policy(
+    name: str,
+    payload: IngestionPolicy,
+    user: Principal = Depends(principal),
+    service: DocumentService = Depends(service_from_request),
+):
+    if name != payload.name:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "path name must match payload name")
+    try:
+        ApiKeyAuthenticator.require(user, "admin")
+        return service.upsert_ingestion_policy(payload, actor=user.name)
+    except PermissionDenied as exc:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, str(exc)) from exc
+
+
+@router.post("/ingestion-policies/evaluate")
+def evaluate_ingestion_policy(
+    payload: DocumentIn,
+    _: Principal = Depends(principal),
+    service: DocumentService = Depends(service_from_request),
+):
+    return service.evaluate_ingestion_policy(payload)
+
+
+@router.delete("/ingestion-policies/{name}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_ingestion_policy(
+    name: str,
+    user: Principal = Depends(principal),
+    service: DocumentService = Depends(service_from_request),
+) -> Response:
+    try:
+        ApiKeyAuthenticator.require(user, "admin")
+        service.delete_ingestion_policy(name, actor=user.name)
+    except PermissionDenied as exc:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, str(exc)) from exc
+    except PolicyNotFound as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "ingestion policy not found") from exc
     return Response(status_code=status.HTTP_204_NO_CONTENT)

@@ -19,9 +19,12 @@ from .models import (
     SearchResponse,
     SavedSearch,
     SavedSearchIn,
+    IngestionPolicy,
+    PolicyDecision,
     WorkflowDecision,
     WorkflowRule,
 )
+from .policies import IngestionPolicyEngine
 from .saved_searches import SavedSearchStore
 from .settings import Settings, get_settings
 from .storage import InMemoryDocumentStore
@@ -41,6 +44,7 @@ class DocumentService:
         audit: AuditLog | None = None,
         metrics: Metrics | None = None,
         saved_searches: SavedSearchStore | None = None,
+        policies: IngestionPolicyEngine | None = None,
     ) -> None:
         self.settings = settings or get_settings()
         self.store = store or InMemoryDocumentStore()
@@ -49,6 +53,7 @@ class DocumentService:
         self.audit = audit or AuditLog()
         self.metrics = metrics or Metrics()
         self.saved_searches = saved_searches or SavedSearchStore()
+        self.policies = policies or IngestionPolicyEngine()
 
     @staticmethod
     def _content_hash(content: str) -> str:
@@ -66,6 +71,20 @@ class DocumentService:
 
         document_id = f"doc_{uuid4().hex}"
         extracted = extract_metadata(payload.content)
+        policy_decision = self.policies.evaluate(payload, extracted)
+        if not policy_decision.accepted:
+            self.metrics.ingest_total.labels(outcome="policy_rejected").inc()
+            self.audit.record(
+                actor=actor,
+                action="document.policy_reject",
+                resource_type="document",
+                resource_id="pending",
+                outcome="rejected",
+                detail={"violations": policy_decision.violations, "policies": policy_decision.matched_policies},
+            )
+            raise InvalidDocument("; ".join(policy_decision.violations))
+        if policy_decision.add_tags:
+            payload = payload.model_copy(update={"tags": sorted(set(payload.tags).union(policy_decision.add_tags))})
         chunks = chunk_text(
             document_id,
             payload.content,
@@ -191,6 +210,29 @@ class DocumentService:
         return stored
 
 
+
+    def evaluate_ingestion_policy(self, payload: DocumentIn) -> PolicyDecision:
+        return self.policies.evaluate(payload, extract_metadata(payload.content))
+
+    def upsert_ingestion_policy(self, policy: IngestionPolicy, *, actor: str) -> IngestionPolicy:
+        stored = self.policies.upsert(policy)
+        self.audit.record(
+            actor=actor,
+            action="policy.upsert",
+            resource_type="ingestion_policy",
+            resource_id=stored.name,
+        )
+        return stored
+
+    def delete_ingestion_policy(self, name: str, *, actor: str) -> None:
+        self.policies.delete(name)
+        self.audit.record(
+            actor=actor,
+            action="policy.delete",
+            resource_type="ingestion_policy",
+            resource_id=name,
+        )
+
     def create_saved_search(self, payload: SavedSearchIn, *, actor: str) -> SavedSearch:
         record = self.saved_searches.create(payload, owner=actor)
         self.audit.record(
@@ -233,4 +275,5 @@ class DocumentService:
             "index": self.index.stats(),
             "workflows": len(self.workflows.list()),
             "saved_searches": len(self.saved_searches.list()),
+            "ingestion_policies": len(self.policies.list()),
         }

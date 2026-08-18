@@ -175,3 +175,31 @@ class SavedSearch(BaseModel):
     limit: int = Field(default=10, ge=1, le=100)
     created_at: datetime = Field(default_factory=utcnow)
     updated_at: datetime = Field(default_factory=utcnow)
+
+class IngestionPolicy(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    priority: int = Field(default=100, ge=0, le=10_000)
+    enabled: bool = True
+    source_equals: str | None = Field(default=None, max_length=100)
+    require_any_tags: list[str] = Field(default_factory=list)
+    block_phrases: list[str] = Field(default_factory=list)
+    max_emails: int | None = Field(default=None, ge=0, le=10_000)
+    max_urls: int | None = Field(default=None, ge=0, le=10_000)
+    add_tags: list[str] = Field(default_factory=list)
+
+    @field_validator("require_any_tags", "add_tags")
+    @classmethod
+    def normalize_policy_tags(cls, values: list[str]) -> list[str]:
+        return sorted({value.strip().lower() for value in values if value.strip()})
+
+    @field_validator("block_phrases")
+    @classmethod
+    def normalize_phrases(cls, values: list[str]) -> list[str]:
+        return sorted({value.strip().lower() for value in values if value.strip()})
+
+
+class PolicyDecision(BaseModel):
+    accepted: bool
+    matched_policies: list[str] = Field(default_factory=list)
+    violations: list[str] = Field(default_factory=list)
+    add_tags: list[str] = Field(default_factory=list)
