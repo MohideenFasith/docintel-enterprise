@@ -1,9 +1,26 @@
-from dataclasses import dataclass
-import os
+from __future__ import annotations
 
-@dataclass(frozen=True)
-class Settings:
-    app_env: str = os.getenv("APP_ENV", "development")
-    log_level: str = os.getenv("LOG_LEVEL", "INFO")
+from functools import lru_cache
 
-settings = Settings()
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix="DOCINTEL_", env_file=".env", extra="ignore")
+
+    app_env: str = "development"
+    log_level: str = "INFO"
+    max_document_chars: int = Field(default=2_000_000, ge=1_000)
+    default_chunk_chars: int = Field(default=1_200, ge=128)
+    default_chunk_overlap: int = Field(default=120, ge=0)
+    max_search_limit: int = Field(default=100, ge=1, le=1_000)
+    api_key: str | None = None
+    admin_api_key: str | None = None
+    rate_limit_per_minute: int = Field(default=120, ge=1)
+    enable_metrics: bool = True
+
+
+@lru_cache(maxsize=1)
+def get_settings() -> Settings:
+    return Settings()

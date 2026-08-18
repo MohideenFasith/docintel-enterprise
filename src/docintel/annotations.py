@@ -1,0 +1,89 @@
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from threading import RLock
+from uuid import uuid4
+
+
+def _now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+@dataclass(slots=True)
+class Annotation:
+    id: str
+    document_id: str
+    author: str
+    body: str
+    labels: set[str] = field(default_factory=set)
+    created_at: datetime = field(default_factory=_now)
+    updated_at: datetime = field(default_factory=_now)
+
+
+class AnnotationStore:
+    def __init__(self) -> None:
+        self._annotations: dict[str, Annotation] = {}
+        self._by_document: dict[str, set[str]] = {}
+        self._lock = RLock()
+
+    @staticmethod
+    def _copy(item: Annotation) -> Annotation:
+        return Annotation(
+            id=item.id,
+            document_id=item.document_id,
+            author=item.author,
+            body=item.body,
+            labels=set(item.labels),
+            created_at=item.created_at,
+            updated_at=item.updated_at,
+        )
+
+    def create(self, document_id: str, author: str, body: str, labels: set[str] | None = None) -> Annotation:
+        author = author.strip()
+        body = body.strip()
+        if not author or not body:
+            raise ValueError("author and body are required")
+        item = Annotation(
+            id=f"ann_{uuid4().hex}",
+            document_id=document_id,
+            author=author,
+            body=body,
+            labels={label.strip().lower() for label in (labels or set()) if label.strip()},
+        )
+        with self._lock:
+            self._annotations[item.id] = item
+            self._by_document.setdefault(document_id, set()).add(item.id)
+        return self._copy(item)
+
+    def list_for_document(self, document_id: str) -> list[Annotation]:
+        with self._lock:
+            ids = self._by_document.get(document_id, set())
+            items = [self._copy(self._annotations[item_id]) for item_id in ids]
+        return sorted(items, key=lambda item: item.created_at)
+
+    def update(self, annotation_id: str, *, body: str | None = None, labels: set[str] | None = None) -> Annotation:
+        with self._lock:
+            item = self._annotations.get(annotation_id)
+            if item is None:
+                raise KeyError(annotation_id)
+            if body is not None:
+                body = body.strip()
+                if not body:
+                    raise ValueError("body must not be blank")
+                item.body = body
+            if labels is not None:
+                item.labels = {label.strip().lower() for label in labels if label.strip()}
+            item.updated_at = _now()
+            return self._copy(item)
+
+    def delete(self, annotation_id: str) -> None:
+        with self._lock:
+            item = self._annotations.pop(annotation_id, None)
+            if item is None:
+                raise KeyError(annotation_id)
+            ids = self._by_document.get(item.document_id)
+            if ids is not None:
+                ids.discard(annotation_id)
+                if not ids:
+                    self._by_document.pop(item.document_id, None)

@@ -1,0 +1,26 @@
+from docintel.extraction import extract_domains, extract_metadata
+
+
+def test_extract_metadata_finds_entities():
+    text = "Email ops@example.com on 2026-08-18. Pay USD 1,250.50. Visit https://example.com/a. Call +91 98765 43210."
+    result = extract_metadata(text)
+    assert result.emails == ["ops@example.com"]
+    assert result.dates == ["2026-08-18"]
+    assert result.amounts == ["USD 1,250.50"]
+    assert result.urls == ["https://example.com/a"]
+    assert result.phones
+    assert result.word_count > 5
+
+
+def test_extract_metadata_empty_and_no_entities():
+    empty = extract_metadata("")
+    assert empty.word_count == 0
+    assert empty.line_count == 0
+    plain = extract_metadata("nothing sensitive here")
+    assert plain.emails == []
+    assert plain.amounts == []
+
+
+def test_extract_domains_deduplicates_hosts():
+    urls = ["https://Example.com/a", "https://example.com/b", "https://docs.python.org/3/"]
+    assert extract_domains(urls) == ["example.com", "docs.python.org"]

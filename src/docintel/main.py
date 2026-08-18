@@ -1,14 +1,43 @@
-from fastapi import FastAPI,HTTPException,Query
-from .models import DocumentIn
+from __future__ import annotations
+
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI, Response
+
+from .api import router
+from .logging_config import configure_logging
+from .security import ApiKeyAuthenticator, SlidingWindowRateLimiter
 from .service import DocumentService
-app=FastAPI(title="DocIntel Enterprise",version="0.1.0");service=DocumentService()
-@app.get("/health")
-def health():return {"status":"ok"}
-@app.post("/documents",status_code=201)
-def ingest(d:DocumentIn):return service.ingest(d)
-@app.get("/documents/{did}")
-def get(did:str):
-    try:return service.get(did)
-    except KeyError:raise HTTPException(404,"document not found")
-@app.get("/search")
-def search(q:str=Query(min_length=2),limit:int=Query(10,ge=1,le=100)):return service.search(q,limit)
+from .settings import Settings, get_settings
+
+
+def create_app(settings: Settings | None = None) -> FastAPI:
+    resolved = settings or get_settings()
+    configure_logging(resolved.log_level)
+
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        app.state.settings = resolved
+        app.state.service = DocumentService(settings=resolved)
+        app.state.authenticator = ApiKeyAuthenticator(resolved.api_key, resolved.admin_api_key)
+        app.state.rate_limiter = SlidingWindowRateLimiter(resolved.rate_limit_per_minute)
+        yield
+
+    app = FastAPI(
+        title="DocIntel Enterprise",
+        version="0.2.0",
+        description="Self-contained document intelligence backend with extraction, chunking, retrieval and workflow routing.",
+        lifespan=lifespan,
+    )
+    app.include_router(router, prefix="/v1")
+
+    @app.get("/metrics", include_in_schema=False)
+    def metrics() -> Response:
+        if not resolved.enable_metrics:
+            return Response(status_code=404)
+        return Response(app.state.service.metrics.render(), media_type="text/plain; version=0.0.4")
+
+    return app
+
+
+app = create_app()

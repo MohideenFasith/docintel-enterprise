@@ -1,17 +1,33 @@
 [build-system]
-requires = ["setuptools>=69", "wheel"]
+requires = ["setuptools==82.0.1", "wheel>=0.45"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "docintel-enterprise"
-version = "0.1.0"
-description = "Document ingestion, chunking, metadata extraction, lexical retrieval and workflow routing."
+version = "0.2.0"
+description = "Document intelligence backend with extraction, chunking, lexical retrieval, security, audit, metrics and workflow routing."
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = ["fastapi>=0.110", "uvicorn>=0.29", "pydantic>=2.6"]
+dependencies = [
+  "fastapi==0.128.2",
+  "uvicorn==0.48.0",
+  "pydantic==2.13.4",
+  "pydantic-settings==2.14.1",
+  "prometheus-client==0.25.0",
+]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0", "httpx>=0.27"]
+dev = [
+  "httpx==0.28.1",
+  "pytest==9.0.2",
+  "pytest-cov==7.0.0",
+  "ruff>=0.12,<1",
+  "mypy>=1.17,<2",
+  "pip-audit>=2.9,<3",
+]
+
+[project.scripts]
+docintel = "docintel.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -19,3 +35,27 @@ where = ["src"]
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+
+[tool.coverage.run]
+branch = true
+source = ["docintel"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 80
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+ignore = ["B008"]
+
+[tool.mypy]
+python_version = "3.11"
+packages = ["docintel"]
+strict = true
+warn_unused_ignores = true

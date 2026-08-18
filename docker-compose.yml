@@ -3,5 +3,10 @@ services:
     build: .
     ports:
       - "8000:8000"
-    environment:
-      APP_ENV: development
+    env_file:
+      - .env
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true

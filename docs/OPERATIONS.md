@@ -1,0 +1,21 @@
+# Operations guide
+
+## Health model
+
+`/v1/health` is a lightweight process liveness probe. `/v1/ready` returns application-level counts for active documents, indexed chunks/terms, and workflow rules. `/metrics` exposes Prometheus text format when metrics are enabled.
+
+## Logging
+
+Application logs are emitted as compact JSON to standard output. Ingest, delete, and search operations include identifiers/outcomes suitable for centralized log ingestion. Configure the threshold with `DOCINTEL_LOG_LEVEL`.
+
+## Rate limiting
+
+The built-in limiter is a per-process sliding window intended for self-contained deployments. Distributed deployments should replace it with a shared Redis or gateway-backed limiter while retaining the same principal key semantics.
+
+## Backups and persistence
+
+The default store is deliberately in-memory. Production adapters should persist source bodies and metadata, preserve soft-delete semantics, and rebuild the lexical index from the authoritative store. JSONL export provides a portable interchange format for small deployments.
+
+## Dependency updates
+
+Keep runtime pins in `requirements.lock` aligned with `pyproject.toml`. Run tests, type checking, lint, and `pip-audit` in the same change as dependency updates.

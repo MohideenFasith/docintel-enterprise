@@ -1,8 +1,104 @@
 # DocIntel Enterprise
 
-Document intelligence backend with normalization, metadata extraction, deterministic chunking, inverted-index search and workflow routing.
+DocIntel Enterprise is a self-contained document-intelligence backend for ingesting text, extracting useful metadata, chunking content, ranking lexical search results, routing documents through configurable workflows, and exposing operational audit/metrics endpoints.
+
+## What it does
+
+The service accepts documents through a versioned FastAPI API. During ingestion it validates size limits, detects duplicate content with SHA-256, extracts emails/URLs/amounts/dates/phone-like strings, creates overlap-aware chunks, and indexes them in an in-memory BM25-style inverted index. Metadata changes cause a targeted re-index. Deletes remove content from the active store and index.
+
+Workflow rules can route documents using tags, title terms, and source. Mutating operations emit audit events. API-key authentication supports writer/admin roles, a sliding-window rate limiter protects endpoints, and Prometheus-compatible metrics expose ingest/search behavior.
+
+## Architecture
+
+```text
+HTTP client
+   |
+FastAPI (`api.py`)
+   |-- authentication / rate limiting (`security.py`)
+   |
+DocumentService (`service.py`)
+   |-- extraction (`extraction.py`)
+   |-- chunking (`chunking.py`)
+   |-- persistence adapter (`storage.py`)
+   |-- lexical index (`index.py`)
+   |-- workflow routing (`workflow.py`)
+   |-- audit log (`audit.py`)
+   `-- Prometheus metrics (`metrics.py`)
+```
+
+`DocumentService` owns application orchestration while persistence and search remain behind explicit components. The default adapters are intentionally in-process so a fresh clone has no external service dependency. They can be replaced by SQL/vector-store adapters without changing the API layer.
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for design decisions and extension points.
+
+## Requirements
+
+- Python 3.11+
+- `pip`
+- Docker 24+ only if you want the container workflow
+
+## Fresh-clone setup
 
 ```bash
-pip install -e .[dev]
+python -m venv .venv
+. .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -r requirements-dev.lock -e . --no-deps
+cp .env.example .env
+pytest -q
 uvicorn docintel.main:app --reload
 ```
+
+OpenAPI is available at `http://127.0.0.1:8000/docs`.
+
+## Testing and quality
+
+```bash
+make test
+make coverage
+make lint
+make typecheck
+make audit
+```
+
+CI runs lint, strict type checking, branch-aware coverage with an 80% threshold, and a dependency vulnerability audit on every push and pull request.
+
+## API examples
+
+```bash
+curl -X POST http://127.0.0.1:8000/v1/documents \
+  -H 'content-type: application/json' \
+  -d '{"title":"Invoice","content":"Cloud invoice USD 120","tags":["finance"]}'
+
+curl 'http://127.0.0.1:8000/v1/search?q=cloud+invoice'
+curl http://127.0.0.1:8000/v1/ready
+curl http://127.0.0.1:8000/metrics
+```
+
+When `DOCINTEL_API_KEY` or `DOCINTEL_ADMIN_API_KEY` is configured, send `X-API-Key` on protected requests.
+
+## Environment variables
+
+All configuration uses the `DOCINTEL_` prefix. `.env.example` documents the supported values. Important settings include the maximum document size, chunk size/overlap, API keys, rate limit, log level, and metrics enablement.
+
+## Docker
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+The image runs as a non-root user, has a health check, and Compose uses a read-only filesystem with `no-new-privileges`.
+
+## Development workflow
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Feature changes should include tests that demonstrate the new behavior in the same change. Avoid mixing formatting-only work with behavioral changes.
+
+## Security
+
+See [SECURITY.md](SECURITY.md) for threat boundaries, credential handling, reporting, and dependency-audit expectations.
+
+## Additional documentation
+
+- [Feature map](docs/FEATURES.md)
+- [Operations guide](docs/OPERATIONS.md)
+- [Changelog](CHANGELOG.md)

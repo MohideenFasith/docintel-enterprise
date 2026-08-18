@@ -1,0 +1,22 @@
+from docintel.jobs import JobQueue
+from docintel.models import JobStatus
+
+
+def test_job_queue_success():
+    seen = []
+    queue = JobQueue()
+    queue.register("collect", lambda payload: seen.append(payload["value"]))
+    job = queue.enqueue("collect", {"value": 7})
+    result = queue.run_next()
+    assert result.id == job.id
+    assert result.status == JobStatus.SUCCEEDED
+    assert seen == [7]
+
+
+def test_job_queue_failure_is_recorded():
+    queue = JobQueue()
+    job = queue.enqueue("missing", {})
+    result = queue.run_next()
+    assert result.id == job.id
+    assert result.status == JobStatus.FAILED
+    assert "no handler" in result.error
