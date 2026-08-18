@@ -111,6 +111,10 @@ def patch_document(
         return service.patch(document_id, payload, actor=user.name)
     except DocumentNotFound as exc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "document not found") from exc
+    except DuplicateDocument as exc:
+        raise HTTPException(status.HTTP_409_CONFLICT, f"duplicate of {exc}") from exc
+    except InvalidDocument as exc:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)) from exc
 
 
 @router.delete("/documents/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -484,3 +488,36 @@ def delete_annotation(
     except KeyError as exc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "annotation not found") from exc
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get("/documents/{document_id}/versions")
+def list_document_versions(
+    document_id: str,
+    _: Principal = Depends(principal),
+    service: DocumentService = Depends(service_from_request),
+):
+    try:
+        return service.list_versions(document_id)
+    except DocumentNotFound as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "document not found") from exc
+
+
+@router.get("/documents/{document_id}/versions/diff")
+def diff_document_versions(
+    document_id: str,
+    from_version: int = Query(ge=1),
+    to_version: int = Query(ge=1),
+    _: Principal = Depends(principal),
+    service: DocumentService = Depends(service_from_request),
+):
+    try:
+        return {
+            "document_id": document_id,
+            "from_version": from_version,
+            "to_version": to_version,
+            "diff": service.diff_versions(document_id, from_version, to_version),
+        }
+    except DocumentNotFound as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "document not found") from exc
+    except KeyError as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "version not found") from exc

@@ -48,6 +48,7 @@ class DocumentIn(BaseModel):
 
 class DocumentPatch(BaseModel):
     title: str | None = Field(default=None, min_length=1, max_length=300)
+    content: str | None = Field(default=None, min_length=1)
     tags: list[str] | None = None
     metadata: dict[str, Any] | None = None
 

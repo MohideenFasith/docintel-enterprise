@@ -32,6 +32,7 @@ from .saved_searches import SavedSearchStore
 from .search_analytics import SearchAnalytics
 from .settings import Settings, get_settings
 from .storage import InMemoryDocumentStore
+from .versioning import DocumentVersion, VersionStore
 from .workflow import WorkflowRouter
 
 logger = logging.getLogger(__name__)
@@ -52,6 +53,7 @@ class DocumentService:
         search_analytics: SearchAnalytics | None = None,
         collections: CollectionStore | None = None,
         annotations: AnnotationStore | None = None,
+        versions: VersionStore | None = None,
     ) -> None:
         self.settings = settings or get_settings()
         self.store = store or InMemoryDocumentStore()
@@ -64,6 +66,7 @@ class DocumentService:
         self.search_analytics = search_analytics or SearchAnalytics()
         self.collections = collections or CollectionStore()
         self.annotations = annotations or AnnotationStore()
+        self.versions = versions or VersionStore()
 
     @staticmethod
     def _content_hash(content: str) -> str:
@@ -125,8 +128,10 @@ class DocumentService:
             resource_id=document_id,
             detail={"chunks": len(chunks), "source": payload.source},
         )
+        stored = self.store.get(document_id)
+        self.versions.capture(stored)
         logger.info("document ingested", extra={"document_id": document_id, "chunk_count": len(chunks), "actor": actor})
-        return self.store.get(document_id)
+        return stored
 
     def get(self, document_id: str) -> DocumentRecord:
         return self.store.get(document_id)
@@ -136,14 +141,52 @@ class DocumentService:
 
     def patch(self, document_id: str, patch: DocumentPatch, *, actor: str = "anonymous") -> DocumentRecord:
         fields = patch.model_fields_set
-        record = self.store.update_metadata(
-            document_id,
-            title=patch.title if "title" in fields else None,
-            tags=patch.tags if "tags" in fields else None,
-            metadata=patch.metadata if "metadata" in fields else None,
-        )
-        chunks = self.store.get_chunks(document_id)
+        if "content" in fields and patch.content is not None:
+            if len(patch.content) > self.settings.max_document_chars:
+                raise InvalidDocument(f"document exceeds {self.settings.max_document_chars} characters")
+            digest = self._content_hash(patch.content)
+            duplicate = self.store.find_by_hash(digest)
+            if duplicate is not None and duplicate.id != document_id:
+                raise DuplicateDocument(duplicate.id)
+            extracted = extract_metadata(patch.content)
+            policy_payload = DocumentIn(
+                title=patch.title or self.store.get(document_id).title,
+                content=patch.content,
+                source=self.store.get(document_id).source,
+                tags=patch.tags if patch.tags is not None else self.store.get(document_id).tags,
+                metadata=patch.metadata if patch.metadata is not None else self.store.get(document_id).metadata,
+            )
+            decision = self.policies.evaluate(policy_payload, extracted)
+            if not decision.accepted:
+                raise InvalidDocument("; ".join(decision.violations))
+            tags = sorted(set(policy_payload.tags).union(decision.add_tags))
+            chunks = chunk_text(
+                document_id,
+                patch.content,
+                max_chars=self.settings.default_chunk_chars,
+                overlap=self.settings.default_chunk_overlap,
+                min_chunk_chars=min(200, self.settings.default_chunk_chars),
+            )
+            record = self.store.replace_content(
+                document_id,
+                content=patch.content,
+                content_sha256=digest,
+                extracted=extracted,
+                chunks=chunks,
+                title=patch.title if "title" in fields else None,
+                tags=tags if ("tags" in fields or decision.add_tags) else None,
+                metadata=patch.metadata if "metadata" in fields else None,
+            )
+        else:
+            record = self.store.update_metadata(
+                document_id,
+                title=patch.title if "title" in fields else None,
+                tags=patch.tags if "tags" in fields else None,
+                metadata=patch.metadata if "metadata" in fields else None,
+            )
+            chunks = self.store.get_chunks(document_id)
         self.index.index_document(record, chunks)
+        self.versions.capture(record)
         self.audit.record(
             actor=actor,
             action="document.patch",
@@ -225,6 +268,15 @@ class DocumentService:
 
 
 
+
+
+    def list_versions(self, document_id: str) -> list[DocumentVersion]:
+        self.store.get(document_id)
+        return self.versions.list(document_id)
+
+    def diff_versions(self, document_id: str, from_version: int, to_version: int) -> str:
+        self.store.get(document_id)
+        return self.versions.diff(document_id, from_version, to_version)
 
     def create_annotation(
         self, document_id: str, body: str, labels: set[str], *, actor: str

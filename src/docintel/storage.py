@@ -4,7 +4,7 @@ from copy import deepcopy
 from threading import RLock
 
 from .errors import DocumentNotFound
-from .models import Chunk, DocumentRecord, DocumentStatus, utcnow
+from .models import Chunk, DocumentRecord, DocumentStatus, ExtractedMetadata, utcnow
 
 
 class InMemoryDocumentStore:
@@ -69,6 +69,41 @@ class InMemoryDocumentStore:
                 record.metadata = deepcopy(metadata)
             record.version += 1
             record.updated_at = utcnow()
+            return deepcopy(record)
+
+
+    def replace_content(
+        self,
+        document_id: str,
+        *,
+        content: str,
+        content_sha256: str,
+        extracted: ExtractedMetadata,
+        chunks: list[Chunk],
+        title: str | None = None,
+        tags: list[str] | None = None,
+        metadata: dict | None = None,
+    ) -> DocumentRecord:
+        with self._lock:
+            record = self._documents.get(document_id)
+            if record is None or record.status == DocumentStatus.DELETED:
+                raise DocumentNotFound(document_id)
+            old_hash = record.content_sha256
+            if title is not None:
+                record.title = title.strip()
+            if tags is not None:
+                record.tags = list(tags)
+            if metadata is not None:
+                record.metadata = deepcopy(metadata)
+            record.content = content
+            record.content_sha256 = content_sha256
+            record.extracted = deepcopy(extracted)
+            record.chunk_count = len(chunks)
+            record.version += 1
+            record.updated_at = utcnow()
+            self._chunks[document_id] = deepcopy(chunks)
+            self._hash_to_id.pop(old_hash, None)
+            self._hash_to_id[content_sha256] = document_id
             return deepcopy(record)
 
     def delete(self, document_id: str) -> DocumentRecord:
