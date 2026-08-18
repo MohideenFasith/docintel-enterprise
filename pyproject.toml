@@ -27,7 +27,6 @@ dev = [
   "pip-audit==2.10.1",
 ]
 
-[project.optional-dependencies]
 observability = ["sentry-sdk==2.66.1"]
 
 [project.scripts]
