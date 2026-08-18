@@ -65,7 +65,7 @@ CI exposes independent lock-drift, lint, strict typecheck, test, fresh-container
 
 ## Offline / air-gapped test behavior
 
-The application and test suite require no database, message broker, cloud account, API token, model download, or outbound HTTP call. Dependency installation naturally needs a package source on a brand-new machine; after the environment is installed, the tests run entirely in process. CI proves this in a clean `python:3.12-slim` container with no external service containers.
+The application and test suite require no database, message broker, cloud account, API token, model download, or outbound HTTP call. Dependency installation naturally needs a package source on a brand-new machine; after the environment is installed, the tests run entirely in process. CI proves this in a clean `python:3.12-slim` container with no external service containers. An autouse pytest guard also rejects real socket connections, so future tests fail if they accidentally add a live network dependency.
 
 To re-run after dependencies are installed:
 
@@ -89,7 +89,7 @@ When `DOCINTEL_API_KEY` or `DOCINTEL_ADMIN_API_KEY` is configured, send `X-API-K
 
 ## Environment variables
 
-All configuration uses the `DOCINTEL_` prefix. `.env.example` documents the supported values. Important settings include the maximum document size, chunk size/overlap, API keys, rate limit, log level, and metrics enablement.
+All configuration uses the `DOCINTEL_` prefix. `.env.example` documents the supported values. Important settings include the maximum document size, chunk size/overlap, API keys, rate limit, log level, metrics enablement, and optional Sentry DSN. Runtime logs are emitted as JSON with request and actor correlation fields.
 
 ## Docker
 
