@@ -5,6 +5,7 @@ import logging
 import time
 from uuid import uuid4
 
+from .annotations import Annotation, AnnotationStore
 from .audit import AuditLog
 from .chunking import chunk_text
 from .collections import Collection, CollectionStore
@@ -50,6 +51,7 @@ class DocumentService:
         policies: IngestionPolicyEngine | None = None,
         search_analytics: SearchAnalytics | None = None,
         collections: CollectionStore | None = None,
+        annotations: AnnotationStore | None = None,
     ) -> None:
         self.settings = settings or get_settings()
         self.store = store or InMemoryDocumentStore()
@@ -61,6 +63,7 @@ class DocumentService:
         self.policies = policies or IngestionPolicyEngine()
         self.search_analytics = search_analytics or SearchAnalytics()
         self.collections = collections or CollectionStore()
+        self.annotations = annotations or AnnotationStore()
 
     @staticmethod
     def _content_hash(content: str) -> str:
@@ -221,6 +224,42 @@ class DocumentService:
 
 
 
+
+
+    def create_annotation(
+        self, document_id: str, body: str, labels: set[str], *, actor: str
+    ) -> Annotation:
+        self.store.get(document_id)
+        annotation = self.annotations.create(document_id, actor, body, labels)
+        self.audit.record(
+            actor=actor,
+            action="annotation.create",
+            resource_type="annotation",
+            resource_id=annotation.id,
+            detail={"document_id": document_id},
+        )
+        return annotation
+
+    def update_annotation(
+        self, annotation_id: str, *, body: str | None, labels: set[str] | None, actor: str
+    ) -> Annotation:
+        annotation = self.annotations.update(annotation_id, body=body, labels=labels)
+        self.audit.record(
+            actor=actor,
+            action="annotation.update",
+            resource_type="annotation",
+            resource_id=annotation_id,
+        )
+        return annotation
+
+    def delete_annotation(self, annotation_id: str, *, actor: str) -> None:
+        self.annotations.delete(annotation_id)
+        self.audit.record(
+            actor=actor,
+            action="annotation.delete",
+            resource_type="annotation",
+            resource_id=annotation_id,
+        )
 
     def create_collection(self, name: str, description: str = "", *, actor: str) -> Collection:
         collection = self.collections.create(name, description)

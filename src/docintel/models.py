@@ -219,3 +219,25 @@ class SearchAnalyticsSnapshot(BaseModel):
     unique_queries: int = Field(ge=0)
     zero_result_searches: int = Field(ge=0)
     top_queries: list[QueryStat] = Field(default_factory=list)
+
+class AnnotationIn(BaseModel):
+    body: str = Field(min_length=1, max_length=10_000)
+    labels: list[str] = Field(default_factory=list, max_length=50)
+
+    @field_validator("body")
+    @classmethod
+    def strip_annotation_body(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("must not be blank")
+        return value
+
+    @field_validator("labels")
+    @classmethod
+    def normalize_annotation_labels(cls, values: list[str]) -> list[str]:
+        return sorted({value.strip().lower() for value in values if value.strip()})
+
+
+class AnnotationPatch(BaseModel):
+    body: str | None = Field(default=None, min_length=1, max_length=10_000)
+    labels: list[str] | None = Field(default=None, max_length=50)

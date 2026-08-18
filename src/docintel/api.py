@@ -10,7 +10,7 @@ from .errors import (
     RateLimitExceeded,
     WorkflowNotFound,
 )
-from .models import DocumentIn, DocumentPatch, IngestionPolicy, SavedSearchIn, WorkflowRule
+from .models import AnnotationIn, AnnotationPatch, DocumentIn, DocumentPatch, IngestionPolicy, SavedSearchIn, WorkflowRule
 from .security import ApiKeyAuthenticator, Principal, SlidingWindowRateLimiter
 from .policies import PolicyNotFound
 from .saved_searches import SavedSearchNotFound
@@ -423,4 +423,64 @@ def delete_collection(
         service.delete_collection(collection_id, actor=user.name)
     except KeyError as exc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "collection not found") from exc
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post("/documents/{document_id}/annotations", status_code=status.HTTP_201_CREATED)
+def create_annotation(
+    document_id: str,
+    payload: AnnotationIn,
+    user: Principal = Depends(principal),
+    service: DocumentService = Depends(service_from_request),
+):
+    try:
+        return service.create_annotation(document_id, payload.body, set(payload.labels), actor=user.name)
+    except DocumentNotFound as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "document not found") from exc
+
+
+@router.get("/documents/{document_id}/annotations")
+def list_annotations(
+    document_id: str,
+    _: Principal = Depends(principal),
+    service: DocumentService = Depends(service_from_request),
+):
+    try:
+        service.get(document_id)
+    except DocumentNotFound as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "document not found") from exc
+    return service.annotations.list_for_document(document_id)
+
+
+@router.patch("/annotations/{annotation_id}")
+def patch_annotation(
+    annotation_id: str,
+    payload: AnnotationPatch,
+    user: Principal = Depends(principal),
+    service: DocumentService = Depends(service_from_request),
+):
+    try:
+        fields = payload.model_fields_set
+        return service.update_annotation(
+            annotation_id,
+            body=payload.body if "body" in fields else None,
+            labels=set(payload.labels or []) if "labels" in fields else None,
+            actor=user.name,
+        )
+    except KeyError as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "annotation not found") from exc
+    except ValueError as exc:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)) from exc
+
+
+@router.delete("/annotations/{annotation_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_annotation(
+    annotation_id: str,
+    user: Principal = Depends(principal),
+    service: DocumentService = Depends(service_from_request),
+) -> Response:
+    try:
+        service.delete_annotation(annotation_id, actor=user.name)
+    except KeyError as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "annotation not found") from exc
     return Response(status_code=status.HTTP_204_NO_CONTENT)
