@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools==82.0.1", "wheel>=0.45"]
+requires = ["setuptools==84.0.0", "wheel>=0.45"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -21,10 +21,10 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   "httpx==0.28.1",
-  "pytest==9.0.2",
-  "pytest-cov==7.0.0",
-  "ruff==0.16.2",
-  "mypy==2.3.0",
+  "pytest==9.1.1",
+  "pytest-cov==7.1.0",
+  "ruff==0.16.3",
+  "mypy==2.3.1",
   "pip-audit==2.10.1",
 ]
 
