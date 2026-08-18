@@ -323,3 +323,30 @@ def delete_ingestion_policy(
     except PolicyNotFound as exc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "ingestion policy not found") from exc
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get("/admin/search-analytics")
+def search_analytics(
+    limit: int = Query(default=20, ge=1, le=500),
+    zero_results_only: bool = False,
+    user: Principal = Depends(principal),
+    service: DocumentService = Depends(service_from_request),
+):
+    try:
+        ApiKeyAuthenticator.require(user, "admin")
+    except PermissionDenied as exc:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, str(exc)) from exc
+    return service.search_analytics_snapshot(limit=limit, zero_results_only=zero_results_only)
+
+
+@router.delete("/admin/search-analytics", status_code=status.HTTP_204_NO_CONTENT)
+def reset_search_analytics(
+    user: Principal = Depends(principal),
+    service: DocumentService = Depends(service_from_request),
+) -> Response:
+    try:
+        ApiKeyAuthenticator.require(user, "admin")
+        service.reset_search_analytics(actor=user.name)
+    except PermissionDenied as exc:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, str(exc)) from exc
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

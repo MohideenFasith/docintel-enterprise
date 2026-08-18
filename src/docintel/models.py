@@ -203,3 +203,19 @@ class PolicyDecision(BaseModel):
     matched_policies: list[str] = Field(default_factory=list)
     violations: list[str] = Field(default_factory=list)
     add_tags: list[str] = Field(default_factory=list)
+
+class QueryStat(BaseModel):
+    query: str
+    count: int = Field(ge=1)
+    zero_result_count: int = Field(ge=0)
+    total_results: int = Field(ge=0)
+    average_results: float = Field(ge=0.0)
+    average_latency_ms: float = Field(ge=0.0)
+    last_seen_at: datetime
+
+
+class SearchAnalyticsSnapshot(BaseModel):
+    total_searches: int = Field(ge=0)
+    unique_queries: int = Field(ge=0)
+    zero_result_searches: int = Field(ge=0)
+    top_queries: list[QueryStat] = Field(default_factory=list)

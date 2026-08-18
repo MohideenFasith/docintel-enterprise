@@ -17,6 +17,7 @@ from .models import (
     DocumentRecord,
     DocumentStatus,
     SearchResponse,
+    SearchAnalyticsSnapshot,
     SavedSearch,
     SavedSearchIn,
     IngestionPolicy,
@@ -26,6 +27,7 @@ from .models import (
 )
 from .policies import IngestionPolicyEngine
 from .saved_searches import SavedSearchStore
+from .search_analytics import SearchAnalytics
 from .settings import Settings, get_settings
 from .storage import InMemoryDocumentStore
 from .workflow import WorkflowRouter
@@ -45,6 +47,7 @@ class DocumentService:
         metrics: Metrics | None = None,
         saved_searches: SavedSearchStore | None = None,
         policies: IngestionPolicyEngine | None = None,
+        search_analytics: SearchAnalytics | None = None,
     ) -> None:
         self.settings = settings or get_settings()
         self.store = store or InMemoryDocumentStore()
@@ -54,6 +57,7 @@ class DocumentService:
         self.metrics = metrics or Metrics()
         self.saved_searches = saved_searches or SavedSearchStore()
         self.policies = policies or IngestionPolicyEngine()
+        self.search_analytics = search_analytics or SearchAnalytics()
 
     @staticmethod
     def _content_hash(content: str) -> str:
@@ -193,8 +197,10 @@ class DocumentService:
             hits = self.index.search(normalized, limit=limit, required_tag=tag, source=source)
         self.metrics.search_total.inc()
         took_ms = (time.perf_counter() - started) * 1_000
-        logger.info("search completed", extra={"query": normalized, "results": len(hits), "took_ms": round(took_ms, 3)})
-        return SearchResponse(query=normalized, total=len(hits), took_ms=round(took_ms, 3), hits=hits)
+        rounded_ms = round(took_ms, 3)
+        self.search_analytics.record(normalized, results=len(hits), latency_ms=rounded_ms)
+        logger.info("search completed", extra={"query": normalized, "results": len(hits), "took_ms": rounded_ms})
+        return SearchResponse(query=normalized, total=len(hits), took_ms=rounded_ms, hits=hits)
 
     def route(self, document_id: str) -> WorkflowDecision:
         return self.workflows.route(self.store.get(document_id))
@@ -210,6 +216,19 @@ class DocumentService:
         return stored
 
 
+
+
+    def search_analytics_snapshot(self, *, limit: int = 20, zero_results_only: bool = False) -> SearchAnalyticsSnapshot:
+        return self.search_analytics.snapshot(limit=limit, zero_results_only=zero_results_only)
+
+    def reset_search_analytics(self, *, actor: str) -> None:
+        self.search_analytics.reset()
+        self.audit.record(
+            actor=actor,
+            action="search_analytics.reset",
+            resource_type="search_analytics",
+            resource_id="global",
+        )
 
     def evaluate_ingestion_policy(self, payload: DocumentIn) -> PolicyDecision:
         return self.policies.evaluate(payload, extract_metadata(payload.content))
