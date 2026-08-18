@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, Response, status
 
+from .annotations import Annotation
+
 from .errors import (
     DocumentNotFound,
     DuplicateDocument,
@@ -18,6 +20,19 @@ from .service import DocumentService
 
 
 router = APIRouter()
+
+
+def annotation_response(item: Annotation) -> dict[str, object]:
+    """Serialize set-backed labels deterministically at the HTTP boundary."""
+    return {
+        "id": item.id,
+        "document_id": item.document_id,
+        "author": item.author,
+        "body": item.body,
+        "labels": sorted(item.labels),
+        "created_at": item.created_at,
+        "updated_at": item.updated_at,
+    }
 
 
 def service_from_request(request: Request) -> DocumentService:
@@ -438,7 +453,7 @@ def create_annotation(
     service: DocumentService = Depends(service_from_request),
 ):
     try:
-        return service.create_annotation(document_id, payload.body, set(payload.labels), actor=user.name)
+        return annotation_response(service.create_annotation(document_id, payload.body, set(payload.labels), actor=user.name))
     except DocumentNotFound as exc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "document not found") from exc
 
@@ -453,7 +468,7 @@ def list_annotations(
         service.get(document_id)
     except DocumentNotFound as exc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "document not found") from exc
-    return service.annotations.list_for_document(document_id)
+    return [annotation_response(item) for item in service.annotations.list_for_document(document_id)]
 
 
 @router.patch("/annotations/{annotation_id}")
@@ -465,11 +480,13 @@ def patch_annotation(
 ):
     try:
         fields = payload.model_fields_set
-        return service.update_annotation(
-            annotation_id,
-            body=payload.body if "body" in fields else None,
-            labels=set(payload.labels or []) if "labels" in fields else None,
-            actor=user.name,
+        return annotation_response(
+            service.update_annotation(
+                annotation_id,
+                body=payload.body if "body" in fields else None,
+                labels=set(payload.labels or []) if "labels" in fields else None,
+                actor=user.name,
+            )
         )
     except KeyError as exc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "annotation not found") from exc

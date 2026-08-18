@@ -16,7 +16,7 @@ class Annotation:
     document_id: str
     author: str
     body: str
-    labels: list[str] = field(default_factory=list)
+    labels: set[str] = field(default_factory=set)
     created_at: datetime = field(default_factory=_now)
     updated_at: datetime = field(default_factory=_now)
 
@@ -34,7 +34,7 @@ class AnnotationStore:
             document_id=item.document_id,
             author=item.author,
             body=item.body,
-            labels=list(item.labels),
+            labels=set(item.labels),
             created_at=item.created_at,
             updated_at=item.updated_at,
         )
@@ -49,7 +49,7 @@ class AnnotationStore:
             document_id=document_id,
             author=author,
             body=body,
-            labels=sorted({label.strip().lower() for label in (labels or set()) if label.strip()}),
+            labels={label.strip().lower() for label in (labels or set()) if label.strip()},
         )
         with self._lock:
             self._annotations[item.id] = item
@@ -73,7 +73,7 @@ class AnnotationStore:
                     raise ValueError("body must not be blank")
                 item.body = body
             if labels is not None:
-                item.labels = sorted({label.strip().lower() for label in labels if label.strip()})
+                item.labels = {label.strip().lower() for label in labels if label.strip()}
             item.updated_at = _now()
             return self._copy(item)
 
