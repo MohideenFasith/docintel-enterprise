@@ -17,9 +17,12 @@ from .models import (
     DocumentRecord,
     DocumentStatus,
     SearchResponse,
+    SavedSearch,
+    SavedSearchIn,
     WorkflowDecision,
     WorkflowRule,
 )
+from .saved_searches import SavedSearchStore
 from .settings import Settings, get_settings
 from .storage import InMemoryDocumentStore
 from .workflow import WorkflowRouter
@@ -37,6 +40,7 @@ class DocumentService:
         workflows: WorkflowRouter | None = None,
         audit: AuditLog | None = None,
         metrics: Metrics | None = None,
+        saved_searches: SavedSearchStore | None = None,
     ) -> None:
         self.settings = settings or get_settings()
         self.store = store or InMemoryDocumentStore()
@@ -44,6 +48,7 @@ class DocumentService:
         self.workflows = workflows or WorkflowRouter()
         self.audit = audit or AuditLog()
         self.metrics = metrics or Metrics()
+        self.saved_searches = saved_searches or SavedSearchStore()
 
     @staticmethod
     def _content_hash(content: str) -> str:
@@ -185,9 +190,47 @@ class DocumentService:
         )
         return stored
 
+
+    def create_saved_search(self, payload: SavedSearchIn, *, actor: str) -> SavedSearch:
+        record = self.saved_searches.create(payload, owner=actor)
+        self.audit.record(
+            actor=actor,
+            action="saved_search.create",
+            resource_type="saved_search",
+            resource_id=record.id,
+        )
+        return record
+
+    def list_saved_searches(self, *, actor: str) -> list[SavedSearch]:
+        return self.saved_searches.list(owner=actor)
+
+    def run_saved_search(self, search_id: str, *, actor: str) -> SearchResponse:
+        saved = self.saved_searches.get(search_id, owner=actor)
+        return self.search(saved.query, saved.limit, tag=saved.tag, source=saved.source)
+
+    def replace_saved_search(self, search_id: str, payload: SavedSearchIn, *, actor: str) -> SavedSearch:
+        record = self.saved_searches.replace(search_id, payload, owner=actor)
+        self.audit.record(
+            actor=actor,
+            action="saved_search.replace",
+            resource_type="saved_search",
+            resource_id=search_id,
+        )
+        return record
+
+    def delete_saved_search(self, search_id: str, *, actor: str) -> None:
+        self.saved_searches.delete(search_id, owner=actor)
+        self.audit.record(
+            actor=actor,
+            action="saved_search.delete",
+            resource_type="saved_search",
+            resource_id=search_id,
+        )
+
     def stats(self) -> dict:
         return {
             "documents": self.store.count(),
             "index": self.index.stats(),
             "workflows": len(self.workflows.list()),
+            "saved_searches": len(self.saved_searches.list()),
         }

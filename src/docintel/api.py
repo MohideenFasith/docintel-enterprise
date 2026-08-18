@@ -10,8 +10,9 @@ from .errors import (
     RateLimitExceeded,
     WorkflowNotFound,
 )
-from .models import DocumentIn, DocumentPatch, WorkflowRule
+from .models import DocumentIn, DocumentPatch, SavedSearchIn, WorkflowRule
 from .security import ApiKeyAuthenticator, Principal, SlidingWindowRateLimiter
+from .saved_searches import SavedSearchNotFound
 from .service import DocumentService
 
 
@@ -213,3 +214,58 @@ def audit_events(
     except PermissionDenied as exc:
         raise HTTPException(status.HTTP_403_FORBIDDEN, str(exc)) from exc
     return service.audit.list(limit=limit, actor=actor, action=action)
+
+
+@router.post("/saved-searches", status_code=status.HTTP_201_CREATED)
+def create_saved_search(
+    payload: SavedSearchIn,
+    user: Principal = Depends(principal),
+    service: DocumentService = Depends(service_from_request),
+):
+    return service.create_saved_search(payload, actor=user.name)
+
+
+@router.get("/saved-searches")
+def list_saved_searches(
+    user: Principal = Depends(principal),
+    service: DocumentService = Depends(service_from_request),
+):
+    return service.list_saved_searches(actor=user.name)
+
+
+@router.put("/saved-searches/{search_id}")
+def replace_saved_search(
+    search_id: str,
+    payload: SavedSearchIn,
+    user: Principal = Depends(principal),
+    service: DocumentService = Depends(service_from_request),
+):
+    try:
+        return service.replace_saved_search(search_id, payload, actor=user.name)
+    except SavedSearchNotFound as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "saved search not found") from exc
+
+
+@router.post("/saved-searches/{search_id}/run")
+def run_saved_search(
+    search_id: str,
+    user: Principal = Depends(principal),
+    service: DocumentService = Depends(service_from_request),
+):
+    try:
+        return service.run_saved_search(search_id, actor=user.name)
+    except SavedSearchNotFound as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "saved search not found") from exc
+
+
+@router.delete("/saved-searches/{search_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_saved_search(
+    search_id: str,
+    user: Principal = Depends(principal),
+    service: DocumentService = Depends(service_from_request),
+) -> Response:
+    try:
+        service.delete_saved_search(search_id, actor=user.name)
+    except SavedSearchNotFound as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "saved search not found") from exc
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

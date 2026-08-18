@@ -148,3 +148,30 @@ class JobRecord(BaseModel):
     error: str | None = None
     created_at: datetime = Field(default_factory=utcnow)
     updated_at: datetime = Field(default_factory=utcnow)
+
+class SavedSearchIn(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    query: str = Field(min_length=2, max_length=500)
+    tag: str | None = Field(default=None, max_length=100)
+    source: str | None = Field(default=None, max_length=100)
+    limit: int = Field(default=10, ge=1, le=100)
+
+    @field_validator("name", "query")
+    @classmethod
+    def normalize_required_text(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("must not be blank")
+        return value
+
+
+class SavedSearch(BaseModel):
+    id: str
+    owner: str
+    name: str
+    query: str
+    tag: str | None = None
+    source: str | None = None
+    limit: int = Field(default=10, ge=1, le=100)
+    created_at: datetime = Field(default_factory=utcnow)
+    updated_at: datetime = Field(default_factory=utcnow)
