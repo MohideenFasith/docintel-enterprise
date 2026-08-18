@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime
 from threading import RLock
 
 from .models import QueryStat, SearchAnalyticsSnapshot, utcnow
@@ -12,7 +13,7 @@ class _Accumulator:
     zero_result_count: int = 0
     total_results: int = 0
     total_latency_ms: float = 0.0
-    last_seen_at = None
+    last_seen_at: datetime | None = None
 
 
 class SearchAnalytics:
