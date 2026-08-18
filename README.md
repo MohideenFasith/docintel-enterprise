@@ -42,7 +42,8 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for design decisions and extension points
 python -m venv .venv
 . .venv/bin/activate
 python -m pip install --upgrade pip
-pip install -r requirements-dev.lock -e . --no-deps
+python -m pip install -r requirements-dev.lock
+python -m pip install -e . --no-deps
 cp .env.example .env
 pytest -q
 uvicorn docintel.main:app --reload
@@ -60,7 +61,17 @@ make typecheck
 make audit
 ```
 
-CI runs lint, strict type checking, branch-aware coverage with an 80% threshold, and a dependency vulnerability audit on every push and pull request.
+CI exposes independent lock-drift, lint, strict typecheck, test, fresh-container smoke, and dependency-audit jobs. The test job enforces branch-aware coverage with an 80% threshold.
+
+## Offline / air-gapped test behavior
+
+The application and test suite require no database, message broker, cloud account, API token, model download, or outbound HTTP call. Dependency installation naturally needs a package source on a brand-new machine; after the environment is installed, the tests run entirely in process. CI proves this in a clean `python:3.12-slim` container with no external service containers.
+
+To re-run after dependencies are installed:
+
+```bash
+DOCINTEL_APP_ENV=test pytest -q
+```
 
 ## API examples
 

@@ -6,8 +6,26 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
 jobs:
-  quality:
+  lock-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verify dependency locks match pyproject pins
+        run: python scripts/check_lock.py
+
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,13 +34,71 @@ jobs:
           python-version: "3.12"
           cache: pip
           cache-dependency-path: requirements-dev.lock
-      - name: Install
-        run: pip install -r requirements-dev.lock -e . --no-deps
-      - name: Lint
+      - name: Install quality tools
+        run: python -m pip install -r requirements-dev.lock
+      - name: Ruff
         run: ruff check .
-      - name: Type check
+
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-dev.lock
+      - name: Install project and type checker
+        run: |
+          python -m pip install -r requirements-dev.lock
+          python -m pip install -e . --no-deps
+      - name: Mypy strict
         run: mypy src
-      - name: Test with coverage
+
+  test:
+    needs: [lock-drift, lint, typecheck]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-dev.lock
+      - name: Install project
+        run: |
+          python -m pip install -r requirements-dev.lock
+          python -m pip install -e . --no-deps
+      - name: Unit and API tests with branch coverage
         run: pytest -q --cov=docintel --cov-report=term-missing --cov-fail-under=80
-      - name: Dependency audit
-        run: pip-audit -r requirements.lock
+
+  smoke:
+    runs-on: ubuntu-latest
+    container: python:3.12-slim
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fresh-container install
+        run: |
+          python -m pip install --disable-pip-version-check -r requirements-dev.lock
+          python -m pip install --disable-pip-version-check -e . --no-deps
+      - name: Self-contained smoke suite
+        env:
+          DOCINTEL_APP_ENV: ci-smoke
+          DOCINTEL_API_KEY: ""
+          DOCINTEL_ADMIN_API_KEY: ""
+          NO_PROXY: "*"
+        run: pytest -q tests/test_api.py tests/test_service.py tests/test_observability.py
+
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-dev.lock
+      - name: Install pip-audit
+        run: python -m pip install pip-audit==2.10.1
+      - name: Audit locked runtime dependencies
+        run: pip-audit -r requirements.lock --no-deps
