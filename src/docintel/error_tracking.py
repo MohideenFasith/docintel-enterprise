@@ -30,7 +30,7 @@ def configure_error_tracking(dsn: str | None, environment: str) -> bool:
 def capture_exception(error: BaseException, *, request_id: str | None = None) -> None:
     if sentry_sdk is None:
         return
-    with sentry_sdk.push_scope() as scope:
+    with sentry_sdk.new_scope() as scope:
         if request_id:
             scope.set_tag("request_id", request_id)
         sentry_sdk.capture_exception(error)
