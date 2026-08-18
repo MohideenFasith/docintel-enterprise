@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.1
+
+- Enforce tracked reproducibility inputs in CI alongside lock-drift validation.
+- Configure application-wide JSON logging with correlation fields and dedicated tests.
+- Promote Sentry to a runtime exception-tracking integration that remains disabled when no DSN is configured.
+- Reject real network connections throughout the pytest suite and add an end-to-end HTTP document lifecycle test.
+- Make annotation label serialization deterministic while preserving set semantics in the domain store.
+
 ## 0.3.0
 
 - Add owner-scoped saved searches with stored filters and executable queries.
